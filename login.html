@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>登录</title>
+    <script src="js/jquery-1.6.4.min.js"></script>
+    <script src="js/lib/vue.js"></script>
+    <!--element.ui-->
+    <script src="js/lib/index.js"></script>
+    <link rel="stylesheet" href="css/theme-chalk/index.css">
+    <style>
+        @font-face{font-family:element-icons;src:url(fonts/element-icons.ttf);}
+        .el-input-number__decrease, .el-input-number__increase{
+            display: list-item;
+            list-style: none;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-main>
+            <el-tabs v-model="Tabs" class="tabs-container">
+                <el-tab-pane label="系统登录" name="login">
+                    <el-form ref="loginForm" :model="loginForm" :rules="rules" label-width="80px">
+                        <el-form-item label="用户名" prop="name">
+                            <el-input v-model="loginForm.name" placeholder="用户名"></el-input>
+                        </el-form-item>
+                        <el-form-item label="密码" prop="password">
+                            <el-input  v-model="loginForm.password" placeholder="密码" type="password"></el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="primary" @click="onLogin">登录</el-button>
+                            <el-button>忘记密码</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-tab-pane>
+                <el-tab-pane label="注册用户" name="register">
+                    <el-form ref="registerForm" :model="registerForm" :rules="rules" label-width="80px">
+                        <el-form-item label="用户名" prop="rName" class="is-required">
+                            <el-input v-model="registerForm.rName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="密码" prop="rPassword" class="is-required">
+                            <el-input v-model="registerForm.rPassword" type="password"></el-input>
+                        </el-form-item>
+                        <el-form-item label="确认密码" prop="rCheckPass" class="is-required">
+                            <el-input v-model="registerForm.rCheckPass" type="password"></el-input>
+                        </el-form-item>
+                        <el-form-item label="昵称" prop="rNickname">
+                            <el-input v-model="registerForm.rNickname"></el-input>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="primary" @click="onRegister">注册</el-button>
+                        </el-form-item>
+                    </el-form>
+                </el-tab-pane>
+            </el-tabs>
+
+        </el-main>
+    </el-container>
+</div>
+<script src="./js/mock.js"></script>
+<script src="./data/login.js"></script>
+<script>
+    var tempObj = { "user|1-3": [{ 'name': '@cname', 'id|18-28': 88 } ]};
+    var realData = { "user": [{ 'name': '张三', 'id': 90 } ]};
+    console.log(Mock.valid(tempObj, realData));
+    new Vue({
+        el:'#app',
+        data(){
+            //自定义验证规则
+            let ValidatePass = (rule,value, callback) => {
+              let reg=/[0-9a-zA-Z]{4,9}/;
+              if(value ===''){
+                  callback(new Error('请填写密码'))
+              }else if(!reg.test(value)){
+                  callback(new Error('密码必须是4-9位字母加数字'))
+              }else{
+                  callback();
+              }
+            };
+            let ValidateCheckPass=(rule,value, callback) => {
+                if(value === ''){
+                    callback(new Error('请再次输入密码'))
+                }else if(value !== this.registerForm.rPassword){
+                    callback(new Error('两次输入密码不一致'))
+                }else {
+                    callback();
+                }
+            };
+            let ValidateName=(rule, value, callback) => {
+                let userName= {name : value};
+                if(value === ''){
+                  callback(new Error("请填写用户名"));
+                } else {
+                    $.ajax({
+                        url:'/userValidate',
+                        data:JSON.stringify(userName),
+                        type:'post',
+                        dataType:'json',
+                        success: function (result) {
+                            if(result.valid === 0){
+                                callback(new Error(result.msg))
+                            }else {
+                                callback()
+                            }
+                        }
+                    })
+                }
+            };
+            return{
+                Tabs:'login',
+                registerForm:{
+                    rName:'',
+                    rPassword:'',
+                    rCheckPass:'',
+                    rNickname:''
+                },
+                loginForm:{
+                   name:'',
+                   password:''
+                },
+                rules:{
+                    name:[
+                        {required:true, message:'请输入用户名',trigger:'blur'}
+                    ],
+                    password:[
+                        {required:true, message:'请输入密码', trigger:'blur'}
+                    ],
+                    rName:[
+                        {validator:ValidateName, trigger:'blur'}
+                    ],
+                    rPassword:[
+                        {validator:ValidatePass, trigger:'blur'}
+                    ],
+                    rCheckPass:[
+                        {validator: ValidateCheckPass, trigger:'blur'}
+                    ]
+                }
+            }
+        },
+        methods:{
+            onLogin: function () {
+                let self= this;
+                this.$refs.loginForm.validate((valid) => {
+                    if(valid){
+                        let data ={
+                            name:this.loginForm.name,
+                            password: this.loginForm.password
+                        };
+                        $.ajax({
+                            url:'/login',
+                            type:'post',
+                            dataType:'json',
+                            data: JSON.stringify(data),
+                            success: function (result) {
+                                console.log(result);
+                                if(result.code === 200){
+                                    self.$message({
+                                        message: result.msg,
+                                        type: 'success'
+                                    });
+                                    window.localStorage.setItem('token',result.userToken);
+                                    window.localStorage.setItem('name',result.name);
+                                    window.location.href = 'index.html';
+                                    //console.log(result.userObj);
+                                }else if(result.code === 500){
+                                    self.$message({
+                                        message: result.msg,
+                                        type: 'error'
+                                    })
+                                }
+                            }
+                        })
+                    }else{
+                        return false;
+                    }
+                })
+            },
+            onRegister: function () {
+                let self = this;
+                this.$refs.registerForm.validate((valid) => {
+                    if(valid){
+                        let data = self.registerForm;
+                        $.ajax({
+                            url:'/register',
+                            type:'post',
+                            data:JSON.stringify(data),
+                            dataType: 'json',
+                            success: function (result) {
+                                self.$message({
+                                    message:'注册成功',
+                                    type:'success'
+                                })
+                            }
+                        })
+                    }
+                })
+            }
+        },
+        mounted(){
+            // let user= sessionStorage.getItem('userObj');
+            // console.log(user);
+        }
+    })
+</script>
+<style>
+    .tabs-container{
+        margin: 180px auto;
+        width: 350px;
+        min-height: 220px;
+        padding: 35px 35px 15px 35px;
+        background-color: #fff;
+        border:1px solid #eee;
+        box-shadow: 0 0 25px #ccc;
+        background-clip: padding-box;
+    }
+    .title{
+        margin: 0 auto 40px;
+        text-align: center;
+        color:#44a4f8;
+    }
+
+</style>
+</body>
+</html>

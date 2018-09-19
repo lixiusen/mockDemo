@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>index</title>
+    <script src="js/jquery-1.6.4.min.js"></script>
+    <script src="js/lib/vue.js"></script>
+    <!--<script src="js/lib/axios.js"></script>-->
+    <!--<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>-->
+    <!--<script  src="js/lib/axios-mock-adapter.min.js"></script>-->
+
+    <!--element组件-->
+    <script src="js/lib/index.js"></script>
+    <link rel="stylesheet" href="css/theme-chalk/index.css">
+    <style>
+        @font-face{font-family:element-icons;src:url(fonts/element-icons.ttf);}
+        .el-input-number__decrease, .el-input-number__increase{
+            display: list-item;
+            list-style: none;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-header>
+            <el-col :span="4">
+                {{ nickName }}
+            </el-col>
+            <el-col :span="16"> </el-col>
+            <el-col :span="4">
+                <el-button type="primary" @click="addUser">添加用户</el-button>
+            </el-col>
+        </el-header>
+        <el-main>
+            <el-table :data="dataTable">
+                <el-table-column type="selection" width="55"></el-table-column>
+                <el-table-column prop="id" label="ID" width="180"></el-table-column>
+                <el-table-column prop="name" label="名称" ></el-table-column>
+                <el-table-column prop="age" label="年龄"></el-table-column>
+                <el-table-column prop="city" label="城市"></el-table-column>
+                <el-table-column label="操作" width="150">
+                    <template slot-scope="scope">
+                        <el-button size="mini" @click="editList(scope.row)">修改</el-button>
+                        <el-button type="danger" size="mini" @click="deleteList(scope.row.id)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-col :span="24">
+                <el-pagination
+                        layout="prev,pager,next"
+                        @current-change="handleCurrentChange"
+                        :page-size= this.pageSize
+                        :total = this.total
+                        :current-page=this.currentPage
+                >
+                </el-pagination>
+            </el-col>
+            <el-dialog :title="title" :visible.sync="dialogFormVisible">
+                <el-form :model="form" :rules="editFormRules" ref="editForm">
+                    <el-form-item label="名称" label-width="120px" prop="name">
+                        <el-input v-model="form.name" auto-complete="off"></el-input>
+                    </el-form-item>
+                    <el-form-item label="年龄" label-width="120px">
+                        <el-input-number v-model="form.age"  :min="1" label="描述"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="城市" label-width="120px">
+                        <el-input v-model="form.city"></el-input>
+                    </el-form-item>
+                </el-form>
+                <div class="dialog-footer" slot="footer">
+                    <el-button @click="dialogFormVisible = false">取消</el-button>
+                    <el-button  v-if="dialogStatus=='create'" type="primary" @click="createList">确定增加</el-button>
+                    <el-button  v-else type="primary" @click="updateList">确定</el-button>
+                </div>
+            </el-dialog>
+        </el-main>
+    </el-container>
+</div>
+<!--mock数据-->
+<script src="./js/mock.js"></script>
+<script src="./data/table.js"></script>
+<script src="./js/table.js"></script>
+</body>
+</html>
